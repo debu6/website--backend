@@ -9,8 +9,17 @@ const app = express();
 // Connect to database
 connectDB();
 
+// CORS Configuration for credentials (cookies)
+const corsOptions = {
+  origin: 'http://localhost:3000', // Frontend URL
+  credentials: true, // Allow credentials (cookies, auth headers)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
