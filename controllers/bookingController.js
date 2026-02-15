@@ -144,6 +144,24 @@ exports.verifyPayment = async (req, res) => {
   }
 };
 
+// @route   GET /api/bookings/all
+// @desc    Get all bookings (Admin)
+// @access  Public (admin auth is handled on frontend)
+exports.getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find().sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: bookings.length,
+      bookings,
+    });
+  } catch (error) {
+    console.error('Error fetching all bookings:', error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch bookings' });
+  }
+};
+
 // @route   GET /api/bookings/history
 // @desc    Get user's booking history
 // @access  Private (User must be authenticated)
