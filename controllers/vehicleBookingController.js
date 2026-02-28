@@ -205,7 +205,13 @@ exports.getAllBookings = async (req, res) => {
 // @access  Protected
 exports.getUserBookings = async (req, res) => {
     try {
-        const bookings = await VehicleBooking.find({ userId: req.user.id })
+        // Search by userId OR by customerEmail (for bookings made before userId was tracked)
+        const bookings = await VehicleBooking.find({
+            $or: [
+                { userId: req.user.id },
+                { customerEmail: req.user.email }
+            ]
+        })
             .populate('vehicleId', 'name type image')
             .sort({ createdAt: -1 });
 

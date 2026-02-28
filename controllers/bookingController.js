@@ -98,16 +98,20 @@ exports.verifyPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Payment verification failed' });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email: bookingData.email });
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+    // Get userId - either from bookingData (if user is logged in) or find by email
+    let userId = bookingData.userId;
+    
+    if (!userId) {
+      // Try to find user by email
+      const user = await User.findOne({ email: bookingData.email });
+      if (user) {
+        userId = user._id;
+      }
     }
 
     // Create booking
     const booking = new Booking({
-      userId: user._id,
+      userId: userId || null,
       name: bookingData.name,
       email: bookingData.email,
       category: bookingData.category,
@@ -167,14 +171,21 @@ exports.getAllBookings = async (req, res) => {
 // @access  Private (User must be authenticated)
 exports.getBookingHistory = async (req, res) => {
   try {
-    // Get userId from authentication middleware (you'll need to add auth middleware)
+    // Get userId and email from authentication middleware
     const userId = req.user?.id;
+    const userEmail = req.user?.email;
 
     if (!userId) {
       return res.status(401).json({ success: false, message: 'User not authenticated' });
     }
 
-    const bookings = await Booking.find({ userId }).sort({ createdAt: -1 });
+    // Search by userId OR by email (for bookings made before userId was tracked)
+    const bookings = await Booking.find({
+      $or: [
+        { userId: userId },
+        { email: userEmail }
+      ]
+    }).sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
