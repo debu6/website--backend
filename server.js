@@ -8,6 +8,8 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const pricingRoutes = require('./routes/pricingRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const vehicleBookingRoutes = require('./routes/vehicleBookingRoutes');
+const ayurvedaRoutes = require('./routes/ayurvedaRoutes');
+const ayurvedaBookingRoutes = require('./routes/ayurvedaBookingRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
@@ -38,6 +40,8 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/vehicle-bookings', vehicleBookingRoutes);
+app.use('/api/ayurveda/treatments', ayurvedaRoutes);
+app.use('/api/ayurveda-bookings', ayurvedaBookingRoutes);
 app.use('/api/upload', uploadRoutes);
 
 // Health check route
