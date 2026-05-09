@@ -1,15 +1,14 @@
 const multer = require('multer');
-const sharp = require('sharp');
-const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
 
-// Create uploads directory if it doesn't exist
-const uploadDir = path.join(__dirname, '..', 'uploads', 'vehicles');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Configure Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.API_KEY,
+    api_secret: process.env.API_SECRET
+});
 
-// Configure multer for memory storage (for processing with sharp)
+// Configure multer for memory storage
 const storage = multer.memoryStorage();
 
 // File filter for images only
@@ -31,7 +30,7 @@ const upload = multer({
     }
 });
 
-// @desc    Upload vehicle image with optional cropping
+// @desc    Upload vehicle image to Cloudinary
 // @route   POST /api/upload/vehicle-image
 // @access  Admin
 const uploadVehicleImage = async (req, res) => {
@@ -43,51 +42,29 @@ const uploadVehicleImage = async (req, res) => {
             });
         }
 
-        // Parse crop data if provided
-        let cropData = null;
-        if (req.body.cropData) {
-            try {
-                cropData = JSON.parse(req.body.cropData);
-            } catch (e) {
-                // Ignore parsing errors, proceed without cropping
-            }
-        }
+        // Convert buffer to base64
+        const base64Image = req.file.buffer.toString('base64');
+        const dataURI = `data:${req.file.mimetype};base64,${base64Image}`;
 
-        // Generate unique filename
-        const filename = `vehicle_${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
-        const outputPath = path.join(uploadDir, filename);
-
-        // Process image with sharp
-        let sharpInstance = sharp(req.file.buffer);
-
-        // Apply crop if crop data is provided
-        if (cropData && cropData.width && cropData.height) {
-            sharpInstance = sharpInstance.extract({
-                left: Math.round(cropData.x),
-                top: Math.round(cropData.y),
-                width: Math.round(cropData.width),
-                height: Math.round(cropData.height)
-            });
-        }
-
-        // Resize to reasonable dimensions and convert to WebP for optimization
-        await sharpInstance
-            .resize(800, 600, { 
-                fit: 'inside', 
-                withoutEnlargement: true 
-            })
-            .webp({ quality: 85 })
-            .toFile(outputPath);
-
-        // Return the URL path to access the image
-        const imageUrl = `/uploads/vehicles/${filename}`;
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(dataURI, {
+            folder: 'yoga-website/vehicles',
+            resource_type: 'auto',
+            quality: 'auto',
+            fetch_format: 'auto',
+            width: 800,
+            height: 600,
+            crop: 'limit',
+            public_id: `vehicle_${Date.now()}_${Math.random().toString(36).substring(7)}`
+        });
 
         res.status(200).json({
             success: true,
             message: 'Image uploaded successfully',
             data: {
-                url: imageUrl,
-                filename: filename
+                url: result.secure_url,
+                publicId: result.public_id,
+                filename: result.public_id
             }
         });
 
@@ -101,36 +78,20 @@ const uploadVehicleImage = async (req, res) => {
     }
 };
 
-// @desc    Delete vehicle image
-// @route   DELETE /api/upload/vehicle-image/:filename
+// @desc    Delete vehicle image from Cloudinary
+// @route   DELETE /api/upload/vehicle-image/:publicId
 // @access  Admin
 const deleteVehicleImage = async (req, res) => {
     try {
-        const { filename } = req.params;
-        
-        // Validate filename to prevent directory traversal
-        if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid filename'
-            });
-        }
+        const { publicId } = req.params;
 
-        const filePath = path.join(uploadDir, filename);
+        // Delete from Cloudinary
+        await cloudinary.uploader.destroy(publicId);
 
-        // Check if file exists
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            res.status(200).json({
-                success: true,
-                message: 'Image deleted successfully'
-            });
-        } else {
-            res.status(404).json({
-                success: false,
-                message: 'Image not found'
-            });
-        }
+        res.status(200).json({
+            success: true,
+            message: 'Image deleted successfully'
+        });
 
     } catch (error) {
         console.error('Image delete error:', error);
