@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Partner = require('../models/Partner');
 
 exports.protect = async (req, res, next) => {
   try {
@@ -17,7 +18,16 @@ exports.protect = async (req, res, next) => {
     try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id);
+      
+      // Check if this is a partner token
+      if (decoded.type === 'partner') {
+        req.user = await Partner.findById(decoded.id);
+        req.userType = 'partner';
+      } else {
+        // Regular user token
+        req.user = await User.findById(decoded.id);
+        req.userType = 'user';
+      }
 
       if (!req.user) {
         return res.status(404).json({ success: false, message: 'User not found' });

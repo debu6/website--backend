@@ -11,6 +11,7 @@ const vehicleBookingRoutes = require('./routes/vehicleBookingRoutes');
 const ayurvedaRoutes = require('./routes/ayurvedaRoutes');
 const ayurvedaBookingRoutes = require('./routes/ayurvedaBookingRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const partnerRoutes = require('./routes/partnerRoutes');
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/partners', partnerRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/vehicles', vehicleRoutes);
