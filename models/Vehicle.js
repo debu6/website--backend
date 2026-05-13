@@ -20,6 +20,11 @@ const vehicleSchema = new mongoose.Schema({
         required: [true, 'Price per day is required'],
         min: 0
     },
+    partnerPricePerDay: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
     image: {
         type: String,
         required: [true, 'Vehicle image is required']
@@ -45,6 +50,11 @@ const vehicleSchema = new mongoose.Schema({
     deposit: {
         type: Number,
         required: [true, 'Security deposit is required'],
+        min: 0
+    },
+    partnerDeposit: {
+        type: Number,
+        default: 0,
         min: 0
     },
     isActive: {
